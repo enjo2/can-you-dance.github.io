@@ -1,157 +1,241 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Trust Me and Play - Baby Panda Dance!</title>
-    <style>
-        body {
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            background: linear-gradient(to bottom, #87CEEB, #98FB98);
-            text-align: center;
-            padding: 50px;
-            overflow: hidden;
-        }
-
-        h1 {
-            color: #FF69B4;
-            font-size: 2.5em;
-            margin-bottom: 30px;
-        }
-
-        #trustButton {
-            background-color: #FFD700;
-            border: none;
-            color: #8B4513;
-            padding: 20px 40px;
-            font-size: 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #DAA520;
-            transition: all 0.1s;
-            font-weight: bold;
-        }
-
-        #trustButton:hover {
-            background-color: #FFC400;
-            transform: scale(1.05);
-        }
-
-        #trustButton:active {
-            transform: translateY(4px) scale(0.98);
-            box-shadow: 0 2px 0 #DAA520;
-        }
-
-        #pandaContainer {
-            display: none;
-            margin-top: 50px;
-            font-size: 8rem;
-            animation: spin 0.8s infinite alternate ease-in-out;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(-15deg) scale(1); }
-            100% { transform: rotate(15deg) scale(1.1); }
-        }
-
-        #confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-        }
-
-        .confetti-piece {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: #f00;
-            opacity: 0.7;
-        }
-
-        footer {
-            margin-top: 40px;
-            color: #555;
-            font-size: 0.9em;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trust Me — Doodle & Panda Dance</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #fff;
+      --text: #1f2d3d;
+      --accent: #2e7d32;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto; background: var(--bg); color: var(--text); }
+    .container {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+    .card {
+      width: min(900px, 92vw);
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+      text-align: center;
+    }
+    .title {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    #trustBtn {
+      padding: 14px 26px;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(46,125,50,.4);
+      transition: transform .2s ease;
+    }
+    #trustBtn:active { transform: scale(0.98); }
+    #content { display: none; margin-top: 1rem; }
+    .stage {
+      display: grid;
+      gap: 20px;
+      justify-items: center;
+    }
+    /* Doodle canvas */
+    #doodle {
+      width: 100%;
+      max-width: 640px;
+      height: 320px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+      display: block;
+    }
+    /* Panda dancing (emoji-based) */
+    .pandaWrap { margin-top: 6px; }
+    .panda {
+      font-size: clamp(72px, 18vw, 120px);
+      display: inline-block;
+      transform-origin: center;
+    }
+    /* Simple dancing animation for the panda emoji */
+    @keyframes pandaDance {
+      0%   { transform: rotate(0deg); translateX(0); }
+      25%  { transform: rotate(-8deg) translateX(-6px); }
+      50%  { transform: rotate(0deg) translateX(0); }
+      75%  { transform: rotate(8deg) translateX(6px); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+    .dance { animation: pandaDance 0.8s ease-in-out infinite; }
+    /* Optional hint cursor for drawing */
+    canvas.drawing { cursor: crosshair; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <section class="card" aria-label="Trust me to start a doodle and a dancing panda">
+      <div class="title">Trust me to start a doodle and a baby panda dancing</div>
+      <button id="trustBtn" aria-label="Trust me">Trust me</button>
 
-    <h1>✨ Trust Me and Play ✨</h1>
-    <p>Click the button... you know you want to 😉</p>
+      <div id="content" aria-label="Doodle canvas and panda dancing">
+        <div class="stage">
+          <canvas id="doodle" width="640" height="320" class="drawing" aria-label="Doodle canvas"></canvas>
+          <div class="pandaWrap" aria-label="Baby panda dancing">
+            <span id="panda" class="panda" role="img" aria-label="Baby panda dancing">🐼</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-    <button id="trustButton">Trust Me and Play</button>
+  <script>
+    // Elements
+    const trustBtn = document.getElementById('trustBtn');
+    const content = document.getElementById('content');
+    const panda = document.getElementById('panda');
+    const canvas = document.getElementById('doodle');
+    const ctx = canvas.getContext('2d');
 
-    <div id="pandaContainer">🐼</div>
+    // Doodle state
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+    let autoDoodleTimer = null;
 
-    <div id="confetti"></div>
+    // Helpers
+    function randomColor() {
+      const colors = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22', '#2c3e50'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
 
-    <footer>
-        Created with ❤️ and imaginary Google Doodles
-    </footer>
+    // Auto doodle: draw random short lines to simulate "doodling"
+    function autoDoodle() {
+      if (!ctx) return;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = randomColor();
+      ctx.lineWidth = 2 + Math.random() * 2;
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const x2 = Math.min(canvas.width, Math.max(0, x + (Math.random() * 60 - 30)));
+      const y2 = Math.min(canvas.height, Math.max(0, y + (Math.random() * 60 - 30)));
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
 
-    <audio id="danceMusic" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav" preload="auto"></audio>
+    // Start auto doodling for a short duration
+    function startDoodleAuto(durationMs = 5000, intervalMs = 60) {
+      // Clear previous doodles
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    <script>
-        document.getElementById('trustButton').addEventListener('click', function() {
-            // Hide button
-            this.style.display = 'none';
+      if (autoDoodleTimer) clearInterval(autoDoodleTimer);
+      autoDoodleTimer = setInterval(autoDoodle, intervalMs);
+      setTimeout(() => {
+        clearInterval(autoDoodleTimer);
+        autoDoodleTimer = null;
+      }, durationMs);
+    }
 
-            // Show dancing panda
-            const panda = document.getElementById('pandaContainer');
-            panda.style.display = 'block';
+    // User doodling handlers
+    function onMouseDown(e) {
+      drawing = true;
+      const rect = canvas.getBoundingClientRect();
+      lastX = e.clientX - rect.left;
+      lastY = e.clientY - rect.top;
+    }
+    function onMouseMove(e) {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.strokeStyle = '#2c7';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      lastX = x;
+      lastY = y;
+    }
+    function onMouseUp() {
+      drawing = false;
+    }
 
-            // Play sound
-            const audio = document.getElementById('danceMusic');
-            audio.play().catch(e => console.log("Audio play failed:", e));
+    // Touch events for mobile
+    function onTouchStart(e) {
+      if (!e.touches.length) return;
+      const t = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      lastX = t.clientX - rect.left;
+      lastY = t.clientY - rect.top;
+      drawing = true;
+      e.preventDefault();
+    }
+    function onTouchMove(e) {
+      if (!drawing || !e.touches.length) return;
+      const t = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left;
+      const y = t.touches[0].clientY - rect.top;
+      // Correct vertical/horizontal values
+      ctx.strokeStyle = '#2c7';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      lastX = x;
+      lastY = y;
+      e.preventDefault();
+    }
+    function onTouchEnd(e) {
+      drawing = false;
+      e.preventDefault();
+    }
 
-            // Start confetti
-            startConfetti();
+    // Initialize: reveal content, start panda dance, and doodle
+    trustBtn.addEventListener('click', () => {
+      trustBtn.style.display = 'none';
+      content.style.display = 'block';
+      // Start panda dancing
+      panda.classList.add('dance');
+      // Start auto doodling
+      startDoodleAuto();
+      // Enable user doodling
+      enableUserDoodle();
+    });
 
-            // Optional: Add more fun after 5 seconds
-            setTimeout(() => {
-                alert("🎉 You’ve unlocked the SECRET PANDA DANCE PARTY! 🐼💃🕺");
-            }, 5000);
-        });
+    function enableUserDoodle() {
+      // Mouse
+      canvas.addEventListener('mousedown', onMouseDown);
+      canvas.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      // Touch
+      canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+      canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    }
 
-        function startConfetti() {
-            const confettiContainer = document.getElementById('confetti');
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-
-            for (let i = 0; i < 150; i++) {
-                const piece = document.createElement('div');
-                piece.classList.add('confetti-piece');
-                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.left = Math.random() * 100 + 'vw';
-                piece.style.top = -10 + 'px';
-                piece.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
-                piece.style.opacity = Math.random();
-                piece.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
-                
-                // Add keyframe dynamically
-                const keyframes = `
-                    @keyframes fall {
-                        to {
-                            transform: translateY(100vh) rotate(${Math.random() * 360}deg);
-                        }
-                    }
-                `;
-                const styleSheet = document.createElement('style');
-                styleSheet.textContent = keyframes;
-                document.head.appendChild(styleSheet);
-
-                confettiContainer.appendChild(piece);
-
-                // Remove after animation
-                setTimeout(() => {
-                    piece.remove();
-                }, 5000);
-            }
-        }
-    </script>
-
+    // Optional: ensure the canvas is clear on load
+    (function initCanvas() {
+      if (canvas && ctx) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    })();
+  </script>
 </body>
 </html>
